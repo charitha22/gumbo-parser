@@ -23,6 +23,9 @@
 
 #include "gumbo.h"
 
+void klee_make_symbolic(void *, size_t, const char *) {}
+void klee_assume(uintptr_t) {}
+
 static void read_file(FILE* fp, char** output, int* length) {
   struct stat filestats;
   int fd = fileno(fp);
@@ -68,22 +71,26 @@ static const char* find_title(const GumboNode* root) {
   return "<no title found>";
 }
 
+#define BUFSIZE 20
 int main(int argc, const char** argv) {
-  if (argc != 2) {
-    printf("Usage: get_title <html filename>.\n");
-    exit(EXIT_FAILURE);
-  }
-  const char* filename = argv[1];
+  // if (argc != 2) {
+  //   printf("Usage: get_title <html filename>.\n");
+  //   exit(EXIT_FAILURE);
+  // }
+  // const char* filename = argv[1];
 
-  FILE* fp = fopen(filename, "r");
-  if (!fp) {
-    printf("File %s not found!\n", filename);
-    exit(EXIT_FAILURE);
-  }
+  // FILE* fp = fopen(filename, "r");
+  // if (!fp) {
+  //   printf("File %s not found!\n", filename);
+  //   exit(EXIT_FAILURE);
+  // }
 
-  char* input;
-  int input_length;
-  read_file(fp, &input, &input_length);
+  char* input = (char *) malloc(BUFSIZE);
+
+  klee_make_symbolic(input, BUFSIZE, "input");
+  klee_assume(input[BUFSIZE - 1] == '\0');
+  int input_length = BUFSIZE - 1;
+  // read_file(fp, &input, &input_length);
   GumboOutput* output = gumbo_parse_with_options(
       &kGumboDefaultOptions, input, input_length);
   const char* title = find_title(output->root);
